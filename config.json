@@ -8,7 +8,8 @@
   "oauth_uri": "https://oauth.dev.lcip.org/v1",
   "content_uri": "https://accounts.dev.lcip.org",
   "profile_uri": "https://profile.dev.lcip.org/v1",
-  "scopes": "profile",
+  "scopes": "profile kv:read kv:write",
   "preverify_email_audience": "accounts.dev.lcip.org",
-  "preverify_email_jku": "https://123done.dev.lcip.org/.well-known/public-keys"
+  "preverify_email_jku": "https://123done.dev.lcip.org/.well-known/public-keys",
+  "kv_uri": "https://stable.dev.lcip.org/kv/v1/data"
 }

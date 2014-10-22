@@ -13,19 +13,19 @@ var express       = require('express'),
 
 
 // create a connection to the redis datastore
-var db = redis.createClient();
+// var db = redis.createClient();
+//
+// db.on("error", function (err) {
+//   db = null;
+//   console.log("redis error!  the server won't actually store anything!  this is just fine for local dev");
+// });
 
-db.on("error", function (err) {
-  db = null;
-  console.log("redis error!  the server won't actually store anything!  this is just fine for local dev");
-});
+var db = require('./db')
 
 var app = express();
 
-app.use(
-  express.logger(),
-  express.bodyParser()
-);
+app.use(express.logger());
+app.use(express.json())
 
 //app.use(require('./retarget.js'));
 
@@ -91,7 +91,7 @@ app.post('/api/logout', checkAuth, function(req, res) {
 
 // the 'todo/save' api saves a todo list
 app.post('/api/todos/save', checkAuth, function(req, res) {
-  if (db) db.set(req.session.user, JSON.stringify(req.body));
+  if (db) db.set(req.session.token, req.body || []);
   res.send(200);
 });
 
@@ -99,7 +99,7 @@ app.post('/api/todos/save', checkAuth, function(req, res) {
 // from the server
 app.get('/api/todos/get', checkAuth, function(req, res) {
   if (db) {
-    db.get(req.session.user, function(err, reply) {
+    db.get(req.session.token, function(err, reply) {
       if (err) {
         res.send(err.toString(), { 'Content-Type': 'text/plain' }, 500);
       } else {
