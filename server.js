@@ -1,7 +1,6 @@
 var express       = require('express'),
     https         = require('https'),
     sessions      = require('client-sessions'),
-    redis         = require('redis'),
     fonts         = require('connect-fonts'),
     font_opensans = require('connect-fonts-opensans'),
     font_alegreyasans
@@ -9,23 +8,12 @@ var express       = require('express'),
     url           = require('url'),
     oauth         = require('./oauth'),
     config        = require('./config');
-
-
-
-// create a connection to the redis datastore
-// var db = redis.createClient();
-//
-// db.on("error", function (err) {
-//   db = null;
-//   console.log("redis error!  the server won't actually store anything!  this is just fine for local dev");
-// });
-
-var db = require('./db')
+    db            = require('./db');
 
 var app = express();
 
 app.use(express.logger());
-app.use(express.json())
+app.use(express.json());
 
 //app.use(require('./retarget.js'));
 
@@ -91,25 +79,20 @@ app.post('/api/logout', checkAuth, function(req, res) {
 
 // the 'todo/save' api saves a todo list
 app.post('/api/todos/save', checkAuth, function(req, res) {
-  if (db) db.set(req.session.token, req.body || []);
+  db.set(req.session.token, req.body || []);
   res.send(200);
 });
 
 // the 'todo/get' api gets the current version of the todo list
 // from the server
 app.get('/api/todos/get', checkAuth, function(req, res) {
-  if (db) {
-    db.get(req.session.token, function(err, reply) {
-      if (err) {
-        res.send(err.toString(), { 'Content-Type': 'text/plain' }, 500);
-      } else {
-        res.send(reply ? reply : '[]', { 'Content-Type': 'application/json' }, 200);
-      }
-    });
-  } else {
-    res.send('[{"v": "Install redis locally for persistent storage, if I want to"}]',
-             { 'Content-Type': 'application/json' }, 200);
-  }
+  db.get(req.session.token, function(err, reply) {
+    if (err) {
+      res.send(err.toString(), { 'Content-Type': 'text/plain' }, 500);
+    } else {
+      res.send(reply ? reply : '[]', { 'Content-Type': 'application/json' }, 200);
+    }
+  });
 });
 
 app.get(/^\/iframe(:?\/(?:index.html)?)?$/, function (req, res, next) {

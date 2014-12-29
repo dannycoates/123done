@@ -23,7 +23,6 @@
     "browserid-verify": "0.1.2",
     "express": "3.5.x",
     "client-sessions": "0.6.x",
-    "redis": "0.7.1",
     "postprocess": "0.2.4",
     "connect-fonts": "2.0.2",
     "connect-fonts-opensans": "0.0.5",
@@ -35,9 +34,6 @@
   },
   "engines": {
     "node": ">=0.8.0"
-  },
-  "optionalDependencies": {
-    "hiredis": "0.1.14"
   },
   "devDependencies": {
     "awsbox": "0.7.0"
