@@ -34,6 +34,7 @@
 
   // upon form submission to add a new element, add it to the list
   form.on('submit', function(e) {
+    able.mark('addClicked')
     e.preventDefault();
     if ( !field.val().match(hasSomething) ) {
       return field.val('').focus();

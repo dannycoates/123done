@@ -1,4 +1,5 @@
 var express       = require('express'),
+    path          = require('path'),
     https         = require('https'),
     sessions      = require('client-sessions'),
     fonts         = require('connect-fonts'),
@@ -51,7 +52,7 @@ app.use(function (req, res, next) {
 
 app.use(
   require('express-able')({
-    dir: './experiments',
+    dir: path.resolve(__dirname, 'experiments'),
     addRoutes: true,
     reportHandler: function (report, cb) {
       console.log(report)
