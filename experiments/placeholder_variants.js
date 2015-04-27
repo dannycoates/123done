@@ -1,9 +1,10 @@
 module.exports = {
   name: 'new todo placeholder variants',
   startDate: '2015-04-26',
+  subjectAttributes: ['email'],
   independentVariables: ['placeholder'],
   eligibilityFunction: function (subject) {
-    return true
+    return this.bernoulliTrial(0.5, subject.email)
   },
   groupingFunction: function (subject) {
     return {
@@ -13,7 +14,7 @@ module.exports = {
           "get this done",
           "relax"
         ],
-        Math.random()
+        subject.email
       )
     }
   },

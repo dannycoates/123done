@@ -11,6 +11,7 @@ $(document).ready(function() {
   // now check with the server to get our current login state
   $.get('/api/auth_status', function(data) {
     loggedInEmail = JSON.parse(data).email;
+    able.subject.email = loggedInEmail;
 
     function updateUI(email) {
       $("ul.loginarea li").css('display', 'none');
@@ -45,6 +46,7 @@ $(document).ready(function() {
 
     var logout = function() {
       loggedInEmail = null;
+      able.subject.email = loggedInEmail;
       updateUI(loggedInEmail);
       updateListArea(loggedInEmail);
 
