@@ -20,6 +20,7 @@ $(document).ready(function() {
         $('#loggedin').css('display', 'block');
         $("#splash").hide();
         $("#lists").slideDown(500);
+        $('#newitem').attr('placeholder', able.choose('placeholder'))
       } else {
         $('#loggedin span').text('');
         $('#loggedout').css('display', 'block');

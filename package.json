@@ -20,23 +20,21 @@
   },
   "private": true,
   "dependencies": {
-    "browserid-verify": "0.1.2",
-    "express": "3.5.x",
-    "client-sessions": "0.6.x",
-    "postprocess": "0.2.4",
-    "connect-fonts": "2.0.2",
-    "connect-fonts-opensans": "0.0.5",
-    "connect-fonts-alegreyasans": "0.0.2",
-    "request": "2.34.0",
     "bower": "*",
-    "fxa-crypto-utils": "shane-tomlinson/fxa-crypto-utils",
-    "jwcrypto": "0.4.4"
+    "browserid-verify": "0.1.2",
+    "client-sessions": "0.7.x",
+    "connect-fonts": "2.0.2",
+    "connect-fonts-alegreyasans": "0.0.2",
+    "connect-fonts-opensans": "0.0.5",
+    "express": "3.5.x",
+    "express-able": "0.4.0",
+    "postprocess": "0.2.4",
+    "request": "2.55.0"
   },
   "engines": {
     "node": ">=0.8.0"
   },
   "devDependencies": {
-    "awsbox": "0.7.0"
   },
   "scripts": {
     "postinstall": "bower install --config.interactive=false -s",

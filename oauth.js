@@ -4,9 +4,10 @@ var config = require('./config');
 var crypto = require('crypto');
 var request = require('request');
 var querystring = require('querystring');
+/* Temporarily disabling all preverified functionality
 var KeyPair = require('fxa-crypto-utils').KeyPair;
 var PreverifiedEmailTokenGenerator = require('fxa-crypto-utils').PreverifiedEmailTokenGenerator;
-
+*/
 var DIFFERENT_BROWSER_ERROR = 3005;
 
 // oauth flows are stored in memory
@@ -51,6 +52,7 @@ function generateAndSaveNonce(req) {
 }
 
 module.exports = function(app, db) {
+  /*
   var keyPair = new KeyPair(config);
   var secretKeyId = 'dev-1';
 
@@ -61,6 +63,7 @@ module.exports = function(app, db) {
     jku: config.preverify_email_jku,
     audience: config.preverify_email_audience
   });
+  */
 
   // begin a new oauth log in flow
   app.get('/api/login', function(req, res) {
@@ -91,6 +94,7 @@ module.exports = function(app, db) {
     return res.redirect(redirectUrl(oauthInfo));
   });
 
+  /*
   app.get('/api/preverified-signup', function(req, res) {
     var email = req.query.email;
     // A real RP would do some validation on the email address
@@ -112,7 +116,7 @@ module.exports = function(app, db) {
         });
       });
   });
-
+  */
   app.get('/api/oauth', function(req, res) {
     var state = req.query.state;
     var code = req.query.code;

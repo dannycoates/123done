@@ -49,6 +49,17 @@ app.use(function (req, res, next) {
   }
 });
 
+app.use(
+  require('express-able')({
+    dir: './experiments',
+    addRoutes: true,
+    reportHandler: function (report, cb) {
+      console.log(report)
+      cb()
+    }
+  })
+)
+
 // add oauth endpoints
 oauth(app, db);
 
