@@ -53,12 +53,14 @@
     var t = $(ev.target);
     if (t.is('li')) {
       if (t.hasClass('done')) {
+        able.mark('removeClicked')
         t.slideUp(200);
         setTimeout(function(){
           t.remove()
           showHideDone();
         },200)
       } else {
+        able.mark('doneClicked')
         done(t);
         $('#donelistwrapper h3').show();
       }
@@ -120,6 +122,7 @@
         data: JSON.stringify(l),
         contentType: 'application/json',
         success: function() {
+          able.mark('stateSaved')
           setSyncStatus('saved');
           udpateLastSync();
         },

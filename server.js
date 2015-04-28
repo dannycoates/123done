@@ -50,12 +50,21 @@ app.use(function (req, res, next) {
   }
 });
 
+var reports = {}
+
 app.use(
   require('express-able')({
     dir: path.resolve(__dirname, 'experiments'),
     addRoutes: true,
     reportHandler: function (report, cb) {
-      console.log(report)
+      report = report || []
+      report.forEach(
+        function (r) {
+          var events = reports[r.experiment] || []
+          events.push(r)
+          reports[r.experiment] = events
+        }
+      )
       cb()
     }
   })
@@ -72,6 +81,34 @@ function checkAuth(req, res, next) {
     next();
   }
 }
+
+app.get('/api/ab_stats', function (req, res) {
+  var names = Object.keys(reports)
+  var stats = {}
+  names.forEach(
+    function (name) {
+      var log = reports[name]
+      var stat = {
+        impressions: 0,
+        choices: {}
+      }
+      log.forEach(
+        function (entry) {
+          if (entry.event === 'choice') {
+            stat.impressions++
+          }
+          var choice = JSON.stringify(entry.choice)
+          var x = stat.choices[choice] || {}
+          x[entry.event] = x[entry.event]++ || 1
+          stat.choices[choice] = x
+        }
+      )
+      stats[name] = stat
+    }
+  )
+  res.setHeader('Content-Type', 'application/json')
+  res.end(JSON.stringify(stats))
+})
 
 // auth status reports who the currently logged in user is on this
 // session
