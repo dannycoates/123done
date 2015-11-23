@@ -2,13 +2,15 @@
 
 This demonstrates how to use Google Sign-In for authenticating users to internal (mozilla.com) sites.
 
+For a live demo visit [https://123done-dcoates.dev.lcip.org](https://123done-dcoates.dev.lcip.org)
+
 ## Docs
 
 The [Google Sign-In](https://developers.google.com/identity/sign-in/web/devconsole-project) documentation is fairly comprehensive. Follow it to create an *client ID*.
 
-The browser side is implemented in [123done.js](static/js/123done.js) (state.js can be ignored).
+The browser side is implemented in [index.html](static/index.html) and [123done.js](static/js/123done.js) (state.js can be ignored).
 
-The server side is implemented in [server.js](server.js)
+The server side is implemented in [server.js](server.js) configured by [config.json](config.json)
 
 The authentication endpoint is `/api/auth`. Here it is at a glance:
 
