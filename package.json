@@ -21,26 +21,17 @@
   "private": true,
   "dependencies": {
     "bower": "*",
-    "browserid-crypto": "0.7.0",
-    "browserid-verify": "0.1.2",
     "client-sessions": "0.6.x",
     "connect-fonts": "2.0.2",
     "connect-fonts-alegreyasans": "0.0.2",
     "connect-fonts-opensans": "0.0.5",
     "express": "3.5.x",
-    "fxa-crypto-utils": "shane-tomlinson/fxa-crypto-utils",
+    "fxa-jwtool": "0.7.2",
     "postprocess": "0.2.4",
-    "redis": "0.7.1",
     "request": "2.34.0"
   },
   "engines": {
     "node": ">=0.8.0"
-  },
-  "optionalDependencies": {
-    "hiredis": "0.1.14"
-  },
-  "devDependencies": {
-    "awsbox": "0.7.0"
   },
   "scripts": {
     "postinstall": "bower install --config.interactive=false -s",

@@ -1,50 +1,43 @@
-## A demo of Persona
+## A demo of internal app authentication with Google Sign-In
 
-Mozilla Persona is a distributed authentication system for the web
-that lets users sign on using their existing email address without
-per-site usernames and passwords.  It's open, free, will become a
-standard, and is rigorously supported by the non-profit organziation
-that strives to make the web better for the humans that use it. 
+This demonstrates how to use Google Sign-In for authenticating users to internal (mozilla.com) sites.
 
-This repository contains a demonstration of persona written in HTML
-and node.js.
+## Docs
 
-## running locally
+The [Google Sign-In](https://developers.google.com/identity/sign-in/web/devconsole-project) documentation is fairly comprehensive. Follow it to create an *client ID*.
 
-1. install [git], [node] and [redis]
-1. get a local copy of the repository: `git clone https://github.com/mozilla/123done`
-1. `cd 123done`
-1. install dependencies: `npm install`
-1. generate keys `node scripts/gen_keys.js` 
-1. run the server: `npm start`
-1. visit it in your browser: `http://127.0.0.1:8080/`
-1. hack and reload!  (web resources don't require a server restart)
+The browser side is implemented in [123done.js](static/js/123done.js) (state.js can be ignored).
 
-  [git]: http://git-scm.org
-  [node]: http://nodejs.org
-  [redis]: http://redis.io
+The server side is implemented in [server.js](server.js)
 
-## deploying to a hosted environment
+The authentication endpoint is `/api/auth`. Here it is at a glance:
 
-123done is all set up to deploy quickly and painlessly on amazon EC2 via 
-[awsbox][].
-
-  [awsbox]: https://github.com/mozilla/awsbox
-
-While full documentation for awsbox is contained within that project, Here is a sample
-command line that might work for you:
-
-    node_modules/.bin/awsbox create \
-        -u http://123done.org \
-        --ssl disable \
-        -n 123done \
-        -t m1.small \
-        --keydir $HOME/.persona_secrets/pubkeys/ 
-
-What do these arguments do?
-
-  * `-u` specifies the public URL of the instance
-  * `--ssl` set to `disable`  removes SSL support from the VM
-  * `-n 123done` sets *123done* as a human visible nickname for the VM
-  * `-t m1.small` specifies a cheap VM that has enough oomph to run the service under load (like from automated tests running)
-  * *(optional)* `--keydir` specifies a directory where all of the public keys of your colleages reside, so they can administer the VM while you're on vacation.
+```js
+app.post('/api/auth', function (req, res) {
+  // Verify the idtoken's (jwt) signature with the key set from the configured JKU.
+  // (Google's jwt include a `kid` but no `jku`)
+  jwtool.verify(req.body.idtoken, { jku: config.auth_jku })
+    .then(
+      function (data) {
+        // ensure the token meets all of our criteria
+        if (
+          data.aud === config.client_id
+          && data.exp > (Date.now() / 1000)
+          && data.hd === 'mozilla.com'
+        ) {
+          // set a cookie for authenticating against our other endpoints
+          req.session.email = data.email
+          res.send(data)
+        }
+        else {
+          // this user is not authorized
+          res.send(401)
+        }
+      },
+      function (err) {
+        // the token was not valid
+        res.send(500, err)
+      }
+    )
+})
+```

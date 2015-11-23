@@ -1,33 +1,20 @@
-var express       = require('express'),
+var db            = require('./db'),
+    express       = require('express'),
     https         = require('https'),
+    JWTool        = require('fxa-jwtool'),
     sessions      = require('client-sessions'),
-    redis         = require('redis'),
     fonts         = require('connect-fonts'),
     font_opensans = require('connect-fonts-opensans'),
     font_alegreyasans
                   = require('connect-fonts-alegreyasans'),
     url           = require('url'),
-    oauth         = require('./oauth'),
     config        = require('./config');
-
-
-
-// create a connection to the redis datastore
-var db = redis.createClient();
-
-db.on("error", function (err) {
-  db = null;
-  console.log("redis error!  the server won't actually store anything!  this is just fine for local dev");
-});
 
 var app = express();
 
-app.use(
-  express.logger(),
-  express.bodyParser()
-);
-
-//app.use(require('./retarget.js'));
+app.use(express.logger());
+app.use(express.urlencoded());
+app.use(express.json());
 
 var allowOrigin = "*";
 try {
@@ -61,9 +48,6 @@ app.use(function (req, res, next) {
   }
 });
 
-// add oauth endpoints
-oauth(app, db);
-
 // a function to verify that the current user is authenticated
 function checkAuth(req, res, next) {
   if (!req.session.email) {
@@ -72,6 +56,36 @@ function checkAuth(req, res, next) {
     next();
   }
 }
+
+var jwtool = new JWTool([config.auth_jku])
+
+app.post('/api/auth', function (req, res) {
+  // Verify the idtoken's (JWT) signature with the key set from the configured JKU.
+  // (Google's jwt include a `kid` but no `jku`)
+  jwtool.verify(req.body.idtoken, { jku: config.auth_jku })
+    .then(
+      function (data) {
+        // ensure the token meets all of our criteria
+        if (
+          data.aud === config.client_id
+          && data.exp > (Date.now() / 1000)
+          && data.hd === 'mozilla.com'
+        ) {
+          // set a cookie for authenticating against our other endpoints
+          req.session.email = data.email
+          res.send(data)
+        }
+        else {
+          // this user is not authorized
+          res.send(401)
+        }
+      },
+      function (err) {
+        // the token was not valid
+        res.send(500, err)
+      }
+    )
+})
 
 // auth status reports who the currently logged in user is on this
 // session
@@ -91,30 +105,25 @@ app.post('/api/logout', checkAuth, function(req, res) {
 
 // the 'todo/save' api saves a todo list
 app.post('/api/todos/save', checkAuth, function(req, res) {
-  if (db) db.set(req.session.user, JSON.stringify(req.body));
+  db.set(req.session.email, JSON.stringify(req.body));
   res.send(200);
 });
 
 // the 'todo/get' api gets the current version of the todo list
 // from the server
 app.get('/api/todos/get', checkAuth, function(req, res) {
-  if (db) {
-    db.get(req.session.user, function(err, reply) {
-      if (err) {
-        res.send(err.toString(), { 'Content-Type': 'text/plain' }, 500);
-      } else {
-        res.send(reply ? reply : '[]', { 'Content-Type': 'application/json' }, 200);
-      }
-    });
-  } else {
-    res.send('[{"v": "Install redis locally for persistent storage, if I want to"}]',
-             { 'Content-Type': 'application/json' }, 200);
-  }
+  db.get(req.session.email, function(err, reply) {
+    if (err) {
+      res.send(err.toString(), { 'Content-Type': 'text/plain' }, 500);
+    } else {
+      res.send(reply ? reply : '[]', { 'Content-Type': 'application/json' }, 200);
+    }
+  });
 });
 
-app.get(/^\/iframe(:?\/(?:index.html)?)?$/, function (req, res, next) {
-  req.url = '/index.html';
-  next();
+app.get('/config', function (req, res) {
+  res.type('application/javascript')
+  res.send('var client_id = "' + config.client_id + '"')
 });
 
 app.use(express.static(__dirname + "/static"));

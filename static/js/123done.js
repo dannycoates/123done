@@ -1,127 +1,109 @@
-/*
-* This JavaScript file implements everything authentication
-* related in the 123done demo. This includes interacting
-* with the Persona API, the 123done server, and updating
-* the UI to reflect sign-in state.
-*/
+;window.loggedInEmail = null
 
-$(document).ready(function() {
-  window.loggedInEmail = null;
-
-  // now check with the server to get our current login state
-  $.get('/api/auth_status', function(data) {
-    loggedInEmail = JSON.parse(data).email;
-
-    function updateUI(email) {
-      $("ul.loginarea li").css('display', 'none');
-      if (email) {
-        console.log(email);
-        $('#loggedin span').text(email);
-        $('#loggedin').css('display', 'block');
-        $("#splash").hide();
-        $("#lists").slideDown(500);
-      } else {
-        $('#loggedin span').text('');
-        $('#loggedout').css('display', 'block');
-        $("#splash").show();
-        $("#lists").hide();
-
+gapi.load(
+  'auth2',
+  function () {
+    // initialize the auth api with our client_id provided by Google in their
+    // dev console and restrict login to accounts on the mozilla hosted domain.
+    // https://developers.google.com/identity/sign-in/web/devconsole-project
+    //
+    // client_id is set by <script src="/config">
+    var auth2 = gapi.auth2.init(
+      {
+        client_id: client_id,
+        hosted_domain: 'mozilla.com'
       }
-      $("button").removeAttr('disabled').css('opacity', '1');
-    }
+    )
+    // listen for sign-in state changes
+    auth2.isSignedIn.listen(signInChanged)
 
-    function updateListArea(email) {
-      $("section.todo ul").css('display', 'none');
-      $("section.todo form").css('display', 'none');
-      if (email) {
-        $('#addform').css('display', 'block');
-        $('#todolist').css('display', 'block');
-        $('#donelist').css('display', 'block');
-      } else {
-        $('#signinhere').css('display', 'block');
+    // listen for changes to current user
+    auth2.currentUser.listen(userChanged)
+
+    // wire up the Sign In button
+    auth2.attachClickHandler(document.getElementById('signinbutton'))
+
+    // wire up logout button
+    $("#logout").click(
+      function(ev) {
+        ev.preventDefault()
+        auth2.signOut()
       }
-    }
+    )
+  }
+)
 
-    var logout = function() {
-      loggedInEmail = null;
-      updateUI(loggedInEmail);
-      updateListArea(loggedInEmail);
+function signInChanged(signedIn) {
+  console.log('signed in: ' + signedIn)
+  if (!signedIn) {
+    logout()
+  }
+}
 
-      $("#splash").show();
-      $("#lists").hide();
+function userChanged(user) {
+  var id_token = user.getAuthResponse().id_token
+  console.log('user changed: ' + id_token)
+  if (id_token) {
+    $.ajax({
+      type: 'POST',
+      url: '/api/auth', // this creates a cookie used to authenicate other api requests
+      data: 'idtoken=' + id_token,
+      contentType: 'application/x-www-form-urlencoded',
+      dataType: 'json',
+      success: updateUI,
+      error: logout
+    })
+  }
+  else {
+    // this case triggers when the page is loaded and a user is not logged in
+    updateUI()
+  }
+}
 
-      // clear items from the dom at logout
-      $("#todolist > li").remove();
-      State.save();
+function logout() {
+  // this deletes the session cookie created by /api/auth
+  $.post('/api/logout')
 
-      // don't display the warning icon at logout time, but wait until the user
-      // makes a change to her tasks
-      $("#dataState > div").css('display', 'none');
+  updateUI()
 
-      // upon logout, make an api request to tear the user's session down
-      $.post('/api/logout');
-    };
+  // clear items from the dom at logout
+  $("#todolist > li").remove()
+  State.save()
+  $("#dataState > div").css('display', 'none')
+}
 
-    function authenticate (endpoint, flow) {
-      if (window.location.href.indexOf('iframe') > -1) {
-        $.getJSON('/api/' + endpoint)
-          .done(function (data) {
-            var relierClient = new FxaRelierClient(data.client_id, {
-              oauthHost: data.oauth_uri,
-              contentHost: data.content_uri
-            });
+function updateUI(data) {
+  // defaults to the welcome view when the user is logged out
 
-            relierClient.auth[flow]({
-              ui: 'lightbox',
-              state: data.state,
-              scope: data.scope,
-              redirectUri: data.redirect_uri
-            }).then(function (result) {
-              document.location.href = result.redirect;
-            }, function (err) {
-              console.log('iframe auth err: %s', JSON.stringify(err));
-            });
-        });
-      } else {
-        $.getJSON('/api/' + endpoint)
-          .done(function (data) {
-            var relierClient = new FxaRelierClient(data.client_id, {
-              oauthHost: data.oauth_uri,
-              contentHost: data.content_uri
-            });
+  loggedInEmail = data ? data.email : null
+  $("ul.loginarea li").css('display', 'none')
+  if (loggedInEmail) {
+    $('#loggedin span').text(loggedInEmail)
+    $('#loggedin').css('display', 'block')
+    $("#splash").hide()
+    $("#lists").slideDown(500)
+  } else {
+    $('#loggedin span').text('')
+    $('#loggedout').css('display', 'block')
+    $("#splash").show()
+    $("#lists").hide()
 
-            relierClient.auth[flow]({
-              ui: 'redirect',
-              state: data.state,
-              scope: data.scope,
-              redirectUri: data.redirect_uri
-            });
-        });
-      }
-    }
+  }
+  $("button").removeAttr('disabled').css('opacity', '1')
 
-    $('button.signin').click(function(ev) {
-      authenticate('login', 'signIn');
-    });
+  // update list area
+  $("section.todo ul").css('display', 'none')
+  $("section.todo form").css('display', 'none')
+  if (loggedInEmail) {
+    $('#addform').css('display', 'block')
+    $('#todolist').css('display', 'block')
+    $('#donelist').css('display', 'block')
+  } else {
+    $('#signinhere').css('display', 'block')
+  }
 
-    $('button.signup').click(function(ev) {
-      authenticate('signup', 'signUp');
-    });
-
-    $('button.sign-choose').click(function(ev) {
-      authenticate('best_choice', 'bestChoice');
-    });
-
-    // upon click of logout link navigator.id.logout()
-    $("#logout").click(function(ev) {
-      ev.preventDefault();
-      logout();
-    });
-
-    updateUI(loggedInEmail);
-    updateListArea(loggedInEmail);
-    // display current saved state
-    State.load();
-
-  });
-});
+  // Load todos
+  if (loggedInEmail) {
+    State.load()
+  }
+}

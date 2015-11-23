@@ -141,7 +141,7 @@
   function loadstate() {
     if (loggedInEmail) {
       setSyncStatus('inprogress');
-      $.get('/api/todos/get', function(data) {
+      $.getJSON('/api/todos/get', function(data) {
         if (!data || !data.length) data = [];
         updateDomWithArray(data);
         setSyncStatus('saved');
@@ -162,7 +162,7 @@
     var l = [ ];
 
     // first let's get the list of todo items from the server
-    $.get('/api/todos/get', function(data) {
+    $.getJSON('/api/todos/get', function(data) {
       if (!data || !data.length) data = [];
       for (var i = 0; i < data.length; i++) l.push(data[i]);
 
